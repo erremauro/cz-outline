@@ -1,0 +1,207 @@
+(function(){
+"use strict";
+var BASE_OFFSET=typeof window.czOutlineOffset==="number"?window.czOutlineOffset:0;
+function getAdminBarOffset(){
+var adminBar=document.getElementById("wpadminbar");
+if(!adminBar){return 0;}
+var style=window.getComputedStyle(adminBar);
+if(!style||style.display==="none"||style.visibility==="hidden"){return 0;}
+if(style.position!=="fixed"){return 0;}
+var h=adminBar.getBoundingClientRect().height||adminBar.offsetHeight||0;
+return h>0?Math.round(h):0;
+}
+function getEffectiveOffset(){
+return BASE_OFFSET+getAdminBarOffset();
+}
+function decodeHash(hash){
+try{return decodeURIComponent((hash||"").replace(/^#/,""));}
+catch(e){return (hash||"").replace(/^#/,"");}
+}
+function samePage(url){
+return url.origin===window.location.origin&&url.pathname===window.location.pathname&&url.search===window.location.search;
+}
+function smoothScrollToId(id){
+var el=document.getElementById(id);
+if(!el){return;}
+var offset=getEffectiveOffset();
+var top=el.getBoundingClientRect().top+window.pageYOffset-offset;
+window.scrollTo({top:top<0?0:top,behavior:"smooth"});
+if(window.history&&window.history.replaceState){
+window.history.replaceState(null,"",window.location.pathname+window.location.search+"#"+encodeURIComponent(id));
+}
+}
+function getLinkTargetId(link){
+if(!link||!link.getAttribute){return "";}
+var href=link.getAttribute("href")||"";
+if(href.charAt(0)==="#"){return decodeHash(href);}
+try{
+var url=new URL(link.href,window.location.href);
+if(samePage(url)&&url.hash){return decodeHash(url.hash);}
+}catch(e){}
+return "";
+}
+function setActive(links,id){
+links.forEach(function(item){item.classList.toggle("active",item.dataset.czTarget===id);});
+}
+function initNav(nav){
+var links=Array.prototype.slice.call(nav.querySelectorAll("a[href]"));
+if(!links.length){return;}
+links.forEach(function(link){
+var targetId=getLinkTargetId(link);
+if(targetId){link.dataset.czTarget=targetId;}
+});
+var localLinks=links.filter(function(link){return !!link.dataset.czTarget;});
+var toggleButton=null;
+var closeButton=nav.querySelector(".cz-outline-close");
+var isDesktopCollapsed=false;
+function getDesktopStateKey(){
+var path=window.location.pathname||"";
+path=path.replace(/\/\d+\/?$/,"/");
+return "cz_outline_desktop_collapsed:"+path;
+}
+function readDesktopCollapsedState(){
+try{return localStorage.getItem(getDesktopStateKey())==="1";}
+catch(e){return false;}
+}
+function writeDesktopCollapsedState(collapsed){
+try{localStorage.setItem(getDesktopStateKey(),collapsed?"1":"0");}
+catch(e){}
+}
+function isMobile(){
+return window.matchMedia("(max-width: 1023.98px)").matches;
+}
+function setToggleButtonContent(btn){
+if(!btn){return;}
+btn.innerHTML='<span class="cz-outline-toggle-label">indice</span>';
+}
+function ensureToggleButton(){
+var previous=nav.previousElementSibling;
+if(previous&&previous.classList&&previous.classList.contains("cz-outline-toggle")){
+if(!toggleButton){toggleButton=previous;}
+setToggleButtonContent(toggleButton);
+return;
+}
+if(toggleButton&&toggleButton.parentNode){return;}
+toggleButton=document.createElement("button");
+toggleButton.type="button";
+toggleButton.className="cz-outline-toggle";
+setToggleButtonContent(toggleButton);
+toggleButton.setAttribute("aria-expanded","false");
+nav.parentNode.insertBefore(toggleButton,nav);
+toggleButton.addEventListener("click",function(){
+if(isMobile()){
+if(nav.classList.contains("is-open")){closeDrawer();}else{openDrawer();}
+return;
+}
+openDesktopOutline();
+});
+}
+function closeDrawer(){
+nav.classList.remove("is-open");
+document.body.classList.remove("cz-outline-mobile-open");
+if(toggleButton){toggleButton.setAttribute("aria-expanded","false");}
+}
+function openDrawer(){
+nav.classList.add("is-open");
+document.body.classList.add("cz-outline-mobile-open");
+if(toggleButton){toggleButton.setAttribute("aria-expanded","true");}
+}
+function closeDesktopOutline(){
+isDesktopCollapsed=true;
+writeDesktopCollapsedState(true);
+nav.classList.add("is-collapsed");
+ensureToggleButton();
+if(toggleButton){
+ toggleButton.classList.add("is-visible");
+ toggleButton.setAttribute("aria-expanded","false");
+}
+}
+function openDesktopOutline(){
+isDesktopCollapsed=false;
+writeDesktopCollapsedState(false);
+nav.classList.remove("is-collapsed");
+if(toggleButton){
+ toggleButton.classList.remove("is-visible");
+ toggleButton.setAttribute("aria-expanded","true");
+}
+}
+if(localLinks.length){
+nav.addEventListener("click",function(e){
+var link=e.target.closest("a[href]");
+if(!link||!nav.contains(link)){return;}
+var id=link.dataset.czTarget||"";
+if(!id){return;}
+e.preventDefault();
+smoothScrollToId(id);
+if(nav.classList.contains("is-open")){closeDrawer();}
+});
+}
+if(closeButton){
+closeButton.addEventListener("click",function(){
+if(isMobile()){
+closeDrawer();
+return;
+}
+closeDesktopOutline();
+});
+}
+var observedIds=[];
+localLinks.forEach(function(link){
+if(observedIds.indexOf(link.dataset.czTarget)===-1){observedIds.push(link.dataset.czTarget);}
+});
+var observedEls=observedIds.map(function(id){return document.getElementById(id);}).filter(Boolean);
+if(observedEls.length&&"IntersectionObserver" in window){
+var visible={};
+var observerOffset=getEffectiveOffset();
+var observer=new IntersectionObserver(function(entries){
+entries.forEach(function(entry){
+var id=entry.target.id;
+if(!id){return;}
+if(entry.isIntersecting){
+var offset=getEffectiveOffset();
+visible[id]=Math.abs(entry.boundingClientRect.top-(offset+1));
+}else{
+delete visible[id];
+}
+});
+var activeId="";
+var best=Number.POSITIVE_INFINITY;
+Object.keys(visible).forEach(function(id){
+if(visible[id]<best){best=visible[id];activeId=id;}
+});
+if(!activeId){
+var offset=getEffectiveOffset();
+var pageTop=window.pageYOffset+offset+2;
+observedEls.forEach(function(el){if(el.offsetTop<=pageTop){activeId=el.id;}});
+}
+if(activeId){setActive(localLinks,activeId);}
+},{root:null,rootMargin:"-"+(observerOffset+10)+"px 0px -60% 0px",threshold:[0,0.2,0.5,1]});
+observedEls.forEach(function(el){observer.observe(el);});
+}
+function ensureMobileUI(){
+var mobile=isMobile();
+var adminOffset=getAdminBarOffset();
+ensureToggleButton();
+nav.style.setProperty("--cz-outline-adminbar",adminOffset+"px");
+if(mobile){
+nav.classList.add("cz-outline--drawer");
+nav.classList.remove("is-collapsed");
+if(toggleButton){toggleButton.classList.remove("is-visible");}
+}else{
+nav.classList.remove("cz-outline--drawer");
+closeDrawer();
+if(isDesktopCollapsed){
+closeDesktopOutline();
+}else{
+openDesktopOutline();
+}
+}
+}
+isDesktopCollapsed=readDesktopCollapsedState();
+ensureMobileUI();
+window.addEventListener("resize",ensureMobileUI,{passive:true});
+}
+document.addEventListener("DOMContentLoaded",function(){
+Array.prototype.slice.call(document.querySelectorAll(".cz-outline")).forEach(initNav);
+});
+})();
