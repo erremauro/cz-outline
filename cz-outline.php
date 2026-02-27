@@ -412,7 +412,7 @@ final class CZ_Outline_Plugin {
 			$title_text .= ' ' . $child->textContent;
 		}
 
-		$title_text = trim( preg_replace( '/\\s+/u', ' ', wp_strip_all_tags( $title_text ) ) );
+		$title_text = $this->normalize_outline_title_text( $title_text );
 		if ( '' === $title_text ) {
 			$title_text = $target;
 		}
@@ -614,7 +614,7 @@ final class CZ_Outline_Plugin {
 				$inner_html = isset( $matches[3] ) ? (string) $matches[3] : '';
 				$attrs     = $this->parse_html_attributes( $attr_raw );
 				$id        = isset( $attrs['id'] ) ? trim( (string) $attrs['id'] ) : '';
-				$title     = trim( preg_replace( '/\\s+/u', ' ', wp_strip_all_tags( $inner_html ) ) );
+				$title     = $this->normalize_outline_title_text( $inner_html );
 
 				$had_original_id = '' !== $id;
 
@@ -657,6 +657,22 @@ final class CZ_Outline_Plugin {
 			'content'  => is_string( $processed ) ? $processed : $html,
 			'headings' => $headings,
 		);
+	}
+
+	/**
+	 * Normalizza titolo outline rimuovendo note inline (es. <sup><a>1</a></sup>).
+	 *
+	 * @param string $raw_title Titolo HTML o testo.
+	 * @return string
+	 */
+	private function normalize_outline_title_text( $raw_title ) {
+		$clean = preg_replace( '/<sup\\b[^>]*>.*?<\\/sup>/is', ' ', (string) $raw_title );
+		$clean = is_string( $clean ) ? $clean : (string) $raw_title;
+		$clean = wp_strip_all_tags( $clean );
+		$clean = preg_replace( '/\\s+/u', ' ', $clean );
+		$clean = is_string( $clean ) ? $clean : '';
+
+		return trim( $clean );
 	}
 
 	/**
