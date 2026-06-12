@@ -2,8 +2,8 @@
 /**
  * Plugin Name: CZ Outline
  * Description: Outline editoriale avanzato per articoli lunghi tramite shortcode [outline].
- * Version: 1.0.0
- * Author: CZ
+ * Version: 1.0.4
+ * Author: Roberto Mauro
  * Text Domain: cz-outline
  */
 
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CZ_OUTLINE_VERSION', '1.0.0' );
+define( 'CZ_OUTLINE_VERSION', '1.0.4' );
 define( 'CZ_OUTLINE_PATH', plugin_dir_path( __FILE__ ) );
 define( 'CZ_OUTLINE_URL', plugin_dir_url( __FILE__ ) );
 
@@ -545,9 +545,12 @@ final class CZ_Outline_Plugin {
 	 * @return array<string,mixed>
 	 */
 	private function get_outline_data( WP_Post $post, $mode, $depth, $numbering ) {
-		$transient_key = $this->build_transient_key( $post->ID, $mode, $depth, $numbering );
+		$modified      = (string) $post->post_modified_gmt;
+		$transient_key = $this->build_transient_key( $post->ID, $mode, $depth, $numbering, $modified );
 		$cached        = get_transient( $transient_key );
 		if ( is_array( $cached ) ) {
+			// Ensure cache key stays tracked even when serving from an existing transient.
+			$this->track_transient_key_for_post( $post->ID, $transient_key );
 			return $cached;
 		}
 
@@ -734,15 +737,21 @@ final class CZ_Outline_Plugin {
 	 * @param string $mode Mode.
 	 * @param int    $depth Depth.
 	 * @param bool   $numbering Numbering.
+	 * @param string $modified_gmt Last modified GMT timestamp.
 	 * @return string
 	 */
-	private function build_transient_key( $post_id, $mode, $depth, $numbering ) {
+	private function build_transient_key( $post_id, $mode, $depth, $numbering, $modified_gmt ) {
+		$modified_stamp = '' !== trim( (string) $modified_gmt )
+			? md5( (string) $modified_gmt )
+			: 'na';
+
 		return sprintf(
-			'cz_outline_%d_%s_%d_%d',
+			'cz_outline_%d_%s_%d_%d_%s',
 			(int) $post_id,
 			sanitize_key( $mode ),
 			(int) $depth,
-			$numbering ? 1 : 0
+			$numbering ? 1 : 0,
+			$modified_stamp
 		);
 	}
 
