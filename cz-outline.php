@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CZ Outline
  * Description: Outline editoriale avanzato per articoli lunghi tramite shortcode [outline].
- * Version: 1.0.4
+ * Version: 1.1.0
  * Author: Roberto Mauro
  * Text Domain: cz-outline
  */
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CZ_OUTLINE_VERSION', '1.0.4' );
+define( 'CZ_OUTLINE_VERSION', '1.1.0' );
 define( 'CZ_OUTLINE_PATH', plugin_dir_path( __FILE__ ) );
 define( 'CZ_OUTLINE_URL', plugin_dir_url( __FILE__ ) );
 
@@ -81,6 +81,25 @@ final class CZ_Outline_Plugin {
 		add_shortcode( 'item', array( $this, 'render_item_shortcode' ) );
 		add_filter( 'the_content', array( $this, 'filter_content_add_heading_ids' ), 9 );
 		add_action( 'save_post', array( $this, 'invalidate_post_transients' ), 10, 2 );
+		add_action( 'wp_head', array( $this, 'print_js_flag' ), 1 );
+	}
+
+	/**
+	 * Segnala in <head> che JavaScript è attivo (html.cz-outline-js): il CSS
+	 * nasconde subito il blocco indice nel contenuto, che outline.js trasforma
+	 * in pannello laterale. Senza JS l'indice resta un blocco nel testo.
+	 *
+	 * @return void
+	 */
+	public function print_js_flag() {
+		if ( ! is_singular() ) {
+			return;
+		}
+		$post = get_post();
+		if ( ! ( $post instanceof WP_Post ) || ! $this->content_has_outline_shortcode( $post->post_content ) ) {
+			return;
+		}
+		echo "<script>document.documentElement.classList.add('cz-outline-js');</script>\n";
 	}
 
 	/**
@@ -224,7 +243,10 @@ final class CZ_Outline_Plugin {
 		$output .= '<div class="cz-outline-inner">';
 		$output .= '<div class="cz-outline-header">';
 		$output .= '<h2 class="cz-outline-heading">' . esc_html__( 'Indice', 'cz-outline' ) . '</h2>';
-		$output .= '<button type="button" class="cz-outline-close" aria-label="' . esc_attr__( 'Chiudi indice', 'cz-outline' ) . '">×</button>';
+		$output .= '<button type="button" class="cz-outline-close" aria-label="' . esc_attr__( 'Nascondi indice', 'cz-outline' ) . '">'
+			. '<span class="cz-outline-close-label" aria-hidden="true">' . esc_html__( 'nascondi', 'cz-outline' ) . '</span>'
+			. '<span class="cz-outline-close-icon" aria-hidden="true">×</span>'
+			. '</button>';
 		$output .= '</div>';
 		$output .= $this->render_outline_list( $nodes, $post->ID, $data['id_to_page'] );
 		$output .= '</div>';

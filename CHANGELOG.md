@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] 2026-11-05
+### Changed
+- L'indice è un pannello a sinistra aperto/chiuso da un pulsante: su desktop (>= 1024px) barra laterale con scroll autonomo che sposta il contenuto a destra, chiusa di default e con la scelta ricordata (localStorage `cz_outline_sidebar_open`); su schermi stretti drawer sopra il contenuto con sfondo oscurato e chiusura con ×, tocco fuori o Esc.
+- Pulsanti di apertura: "indice" nel testo al posto del blocco indice (con icona) e, se presente la toolbar di cz-continue-reading, un'icona nella toolbar a sinistra di "Su". Funziona anche qualunque altro elemento `[data-cz-outline-toggle]` (etichette `data-label-show` / `data-label-hide`).
+- La sezione corrente è evidenziata in grassetto (`.active`, con `aria-current="location"`) e mantenuta visibile nel pannello; calcolo sullo scroll invece che con IntersectionObserver.
+- Apertura e chiusura del pannello con animazione di slide da sinistra (e del contenuto su desktop); disattivata con `prefers-reduced-motion`.
+- Il pulsante di chiusura mostra "nascondi" su desktop e × su mobile.
+- `outline.css` in forma leggibile; aggiunta regola `@media print` che nasconde l'indice.
+
+### Added
+- Classe `cz-outline-js` su `<html>` (in `wp_head`) per nascondere subito il blocco indice nel contenuto prima che diventi pannello.
+
+### Removed
+- Blocco indice nel contenuto con chiusura su desktop e relativo stato in localStorage (`cz_outline_desktop_collapsed:*`).
+
 ## [1.0.4] 2026-06-12
 ### Changed
 - Updated author metadata to Roberto Mauro.
