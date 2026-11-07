@@ -10,10 +10,10 @@
  * In entrambi la sezione corrente è evidenziata (.active) e mantenuta
  * visibile nel pannello, che scorre per conto suo.
  *
- * Pulsanti di apertura (creati qui): "indice" nel testo, al posto del
- * blocco indice, e un'icona nella czcr-toolbar (plugin cz-continue-reading)
- * a sinistra di "Su". Funziona anche qualunque altro [data-cz-outline-toggle]
- * (etichette in data-label-show / data-label-hide).
+ * Pulsanti di apertura: "indice" nel testo, creato qui al posto del blocco
+ * indice, e l'icona nella toolbar di cz-core (mu-plugins/cz-toolbar), a
+ * sinistra di "Su", registrata in PHP. Funziona anche qualunque altro
+ * [data-cz-outline-toggle] (etichette in data-label-show / data-label-hide).
  */
 (function () {
   "use strict";
@@ -128,8 +128,8 @@
     if (!nav.id) nav.id = "cz-outline-panel";
 
     // Pulsanti di apertura:
-    // - "indice" nel testo, al posto del blocco indice;
-    // - icona nella czcr-toolbar (plugin cz-continue-reading), a sinistra di "Su";
+    // - "indice" nel testo, al posto del blocco indice (creato qui);
+    // - icona nella toolbar di cz-core, registrata in PHP (register_toolbar_button());
     // - eventuali altri [data-cz-outline-toggle] forniti dal tema.
     var inline = document.createElement("button");
     inline.type = "button";
@@ -140,22 +140,6 @@
     inline.innerHTML =
       ICON + '<span class="cz-outline-toggle-label" data-cz-outline-toggle-label>indice</span>';
     nav.parentNode.insertBefore(inline, nav);
-
-    var czcrToolbar = document.querySelector(".czcr-toolbar");
-    if (czcrToolbar) {
-      var tbBtn = document.createElement("button");
-      tbBtn.type = "button";
-      tbBtn.className = "czcr-toolbar__btn cz-outline-czcr-btn";
-      tbBtn.setAttribute("data-cz-outline-toggle", "");
-      tbBtn.setAttribute("data-label-show", "Mostra indice");
-      tbBtn.setAttribute("data-label-hide", "Nascondi indice");
-      tbBtn.innerHTML = '<span class="czcr-icon" aria-hidden="true">' + ICON + "</span>";
-      var topBtn = czcrToolbar.querySelector("[data-czcr-top]");
-      var group = czcrToolbar.querySelector(".czcr-toolbar__group");
-      if (topBtn) topBtn.parentNode.insertBefore(tbBtn, topBtn);
-      else if (group) group.insertBefore(tbBtn, group.firstChild);
-      else czcrToolbar.appendChild(tbBtn);
-    }
 
     var toggles = Array.prototype.slice.call(document.querySelectorAll("[data-cz-outline-toggle]"));
     toggles.forEach(function (btn) {

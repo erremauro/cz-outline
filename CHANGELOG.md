@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] 2026-11-05
+### Changed
+- L'icona dell'indice nella toolbar è registrata in PHP nella toolbar di cz-core (`cz_toolbar_add_button( 'outline', … )`, al centro con ordine 10, quindi a sinistra di "Su") invece di essere iniettata via JavaScript nella toolbar di cz-continue-reading. Richiede cz-core 1.1.0 (`mu-plugins/cz-toolbar`).
+- Lo stato "aperto" dell'icona usa lo stile comune della toolbar (`.cz-toolbar__btn[aria-expanded="true"]`); con il drawer aperto su mobile viene nascosta `.cz-toolbar`.
+
 ## [1.1.0] 2026-11-05
 ### Changed
 - L'indice è un pannello a sinistra aperto/chiuso da un pulsante: su desktop (>= 1024px) barra laterale con scroll autonomo che sposta il contenuto a destra, chiusa di default e con la scelta ricordata (localStorage `cz_outline_sidebar_open`); su schermi stretti drawer sopra il contenuto con sfondo oscurato e chiusura con ×, tocco fuori o Esc.
@@ -51,7 +56,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cache transient con invalidazione automatica su `save_post`.
 - Caricamento automatico asset minificati `.min.css/.min.js` quando disponibili.
 
-[Unreleased]: https://github.com/erremauro/cz-outline/compare/v1.0.4...HEAD
+[Unreleased]: https://github.com/erremauro/cz-outline/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/erremauro/cz-outline/releases/tag/v1.2.0
+[1.1.0]: https://github.com/erremauro/cz-outline/releases/tag/v1.1.0
 [1.0.4]: https://github.com/erremauro/cz-outline/releases/tag/v1.0.4
 [1.0.3]: https://github.com/erremauro/cz-outline/releases/tag/v1.0.3
 [1.0.2]: https://github.com/erremauro/cz-outline/releases/tag/v1.0.2

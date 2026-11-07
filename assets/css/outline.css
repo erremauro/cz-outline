@@ -134,12 +134,6 @@
   line-height: 1;
 }
 
-/* ---------- Pulsante nella czcr-toolbar (plugin cz-continue-reading) ---------- */
-
-.czcr-toolbar__btn.cz-outline-czcr-btn[aria-expanded="true"] {
-  background: var(--czcr-btn-bg-hover, rgba(60, 60, 60, 0.5));
-}
-
 /* ---------- Tema chiaro ---------- */
 
 html[data-theme="light"] .cz-outline {
@@ -345,7 +339,7 @@ body.cz-outline-mobile-open {
   overflow: hidden;
 }
 
-body.cz-outline-mobile-open .czcr-toolbar {
+body.cz-outline-mobile-open .cz-toolbar {
   display: none !important;
 }
 

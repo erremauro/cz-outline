@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CZ Outline
  * Description: Outline editoriale avanzato per articoli lunghi tramite shortcode [outline].
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Roberto Mauro
  * Text Domain: cz-outline
  */
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CZ_OUTLINE_VERSION', '1.1.0' );
+define( 'CZ_OUTLINE_VERSION', '1.2.0' );
 define( 'CZ_OUTLINE_PATH', plugin_dir_path( __FILE__ ) );
 define( 'CZ_OUTLINE_URL', plugin_dir_url( __FILE__ ) );
 
@@ -82,6 +82,40 @@ final class CZ_Outline_Plugin {
 		add_filter( 'the_content', array( $this, 'filter_content_add_heading_ids' ), 9 );
 		add_action( 'save_post', array( $this, 'invalidate_post_transients' ), 10, 2 );
 		add_action( 'wp_head', array( $this, 'print_js_flag' ), 1 );
+		add_action( 'cz_toolbar_buttons', array( $this, 'register_toolbar_button' ) );
+	}
+
+	/**
+	 * Icona "indice" nella toolbar di cz-core (mu-plugins/cz-toolbar), al
+	 * centro a sinistra di "Su". Apertura/chiusura gestite da outline.js
+	 * tramite data-cz-outline-toggle; nascosta se l'indice risulta vuoto.
+	 *
+	 * @return void
+	 */
+	public function register_toolbar_button() {
+		if ( ! is_singular() || ! function_exists( 'cz_toolbar_add_button' ) ) {
+			return;
+		}
+		$post = get_post();
+		if ( ! ( $post instanceof WP_Post ) || ! $this->content_has_outline_shortcode( $post->post_content ) ) {
+			return;
+		}
+
+		cz_toolbar_add_button(
+			'outline',
+			array(
+				'label' => __( 'Mostra indice', 'cz-outline' ),
+				'zone'  => 'center',
+				'order' => 10,
+				'icon'  => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 7h16M7 12h13M10 17h10"/></svg>',
+				'attrs' => array(
+					'data-cz-outline-toggle' => true,
+					'data-label-show'        => __( 'Mostra indice', 'cz-outline' ),
+					'data-label-hide'        => __( 'Nascondi indice', 'cz-outline' ),
+					'aria-expanded'          => 'false',
+				),
+			)
+		);
 	}
 
 	/**
