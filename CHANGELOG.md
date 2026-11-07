@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] 2026-11-07
+### Added
+- Metodo pubblico `get_outline_export()`: restituisce l'outline come albero strutturato (`title`, `mode`, `depth`, `numbering`, `items[]` con `{ id, title, number?, children }`) più il contenuto grezzo con gli ID iniettati negli heading. Funziona anche fuori dal loop (es. REST API), usato da cz-article-api per l'export PDF.
+
 ## [1.2.0] 2026-11-05
 ### Changed
 - L'icona dell'indice nella toolbar è registrata in PHP nella toolbar di cz-core (`cz_toolbar_add_button( 'outline', … )`, al centro con ordine 10, quindi a sinistra di "Su") invece di essere iniettata via JavaScript nella toolbar di cz-continue-reading. Richiede cz-core 1.1.0 (`mu-plugins/cz-toolbar`).

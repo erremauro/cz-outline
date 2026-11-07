@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CZ Outline
  * Description: Outline editoriale avanzato per articoli lunghi tramite shortcode [outline].
- * Version: 1.2.0
+ * Version: 1.3.0
  * Author: Roberto Mauro
  * Text Domain: cz-outline
  */
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CZ_OUTLINE_VERSION', '1.2.0' );
+define( 'CZ_OUTLINE_VERSION', '1.3.0' );
 define( 'CZ_OUTLINE_PATH', plugin_dir_path( __FILE__ ) );
 define( 'CZ_OUTLINE_URL', plugin_dir_url( __FILE__ ) );
 
@@ -287,6 +287,115 @@ final class CZ_Outline_Plugin {
 		$output .= '</nav>';
 
 		return $output;
+	}
+
+	/**
+	 * Esporta l'outline in forma strutturata per consumer esterni (API, PDF, EPUB).
+	 *
+	 * Non dipende dal contesto della query (funziona anche in REST) e restituisce:
+	 * - `title`: etichetta dell'indice,
+	 * - `mode`, `depth`, `numbering`: parametri effettivi dello shortcode,
+	 * - `items`: albero di nodi `{ id, title, number?, children }`,
+	 * - `content`: post_content grezzo con ID iniettati negli heading privi di ID
+	 *   (stessi ID usati dall'outline), shortcode [outline] rimossi.
+	 *
+	 * @param WP_Post|int|null $post Post.
+	 * @return array<string,mixed>|null Null se il post non contiene [outline] o l'outline è vuoto.
+	 */
+	public function get_outline_export( $post = null ) {
+		$post = get_post( $post );
+		if ( ! ( $post instanceof WP_Post ) ) {
+			return null;
+		}
+
+		$raw_content = (string) $post->post_content;
+		if ( ! $this->content_has_outline_shortcode( $raw_content ) ) {
+			return null;
+		}
+
+		$shortcode = $this->extract_first_outline_shortcode( $raw_content );
+		if ( empty( $shortcode ) ) {
+			return null;
+		}
+
+		$atts = shortcode_atts(
+			array(
+				'mode'      => 'auto',
+				'depth'     => '3',
+				'numbering' => 'false',
+			),
+			isset( $shortcode['atts'] ) && is_array( $shortcode['atts'] ) ? $shortcode['atts'] : array(),
+			'outline'
+		);
+
+		$mode = strtolower( sanitize_text_field( (string) $atts['mode'] ) );
+		if ( ! in_array( $mode, array( 'auto', 'manual', 'hybrid' ), true ) ) {
+			$mode = 'auto';
+		}
+		$depth     = max( 1, min( 5, absint( $atts['depth'] ) ) );
+		$numbering = $this->sanitize_bool_like( $atts['numbering'] );
+
+		$data = $this->get_outline_data( $post, $mode, $depth, $numbering );
+		if ( empty( $data['id_to_page'] ) || ! is_array( $data['id_to_page'] ) ) {
+			return null;
+		}
+
+		if ( 'manual' === $mode ) {
+			$manual_targets = isset( $data['existing_id_to_page'] ) && is_array( $data['existing_id_to_page'] ) ? $data['existing_id_to_page'] : array();
+			$nodes          = $this->build_manual_nodes( isset( $shortcode['content'] ) ? (string) $shortcode['content'] : '', $manual_targets );
+		} else {
+			$nodes = $this->build_auto_or_hybrid_nodes( $data['headings'], $mode, $depth );
+		}
+
+		if ( empty( $nodes ) ) {
+			return null;
+		}
+
+		if ( $numbering ) {
+			$this->apply_hierarchical_numbering( $nodes );
+		}
+
+		$pages   = isset( $data['page_contents'] ) && is_array( $data['page_contents'] ) ? $data['page_contents'] : array( $raw_content );
+		$content = $this->remove_outline_shortcodes( implode( '<!--nextpage-->', $pages ) );
+
+		return array(
+			'title'     => __( 'Indice', 'cz-outline' ),
+			'mode'      => $mode,
+			'depth'     => $depth,
+			'numbering' => $numbering,
+			'items'     => $this->export_nodes( $nodes ),
+			'content'   => $content,
+		);
+	}
+
+	/**
+	 * Normalizza i nodi per l'export (solo campi pubblici, ID/titoli sanificati).
+	 *
+	 * @param array<int,array<string,mixed>> $nodes Nodi.
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function export_nodes( $nodes ) {
+		$items = array();
+		foreach ( $nodes as $node ) {
+			$id    = isset( $node['id'] ) ? $this->sanitize_anchor_id( (string) $node['id'] ) : '';
+			$title = isset( $node['title'] ) ? sanitize_text_field( (string) $node['title'] ) : '';
+			if ( '' === $id || '' === $title ) {
+				continue;
+			}
+
+			$item = array(
+				'id'       => $id,
+				'title'    => $title,
+				'children' => ! empty( $node['children'] ) && is_array( $node['children'] ) ? $this->export_nodes( $node['children'] ) : array(),
+			);
+			if ( isset( $node['number'] ) ) {
+				$item['number'] = trim( (string) $node['number'] );
+			}
+
+			$items[] = $item;
+		}
+
+		return $items;
 	}
 
 	/**
