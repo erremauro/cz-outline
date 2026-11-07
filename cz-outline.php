@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CZ Outline
  * Description: Outline editoriale avanzato per articoli lunghi tramite shortcode [outline].
- * Version: 1.3.0
+ * Version: 1.3.1
  * Author: Roberto Mauro
  * Text Domain: cz-outline
  */
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CZ_OUTLINE_VERSION', '1.3.0' );
+define( 'CZ_OUTLINE_VERSION', '1.3.1' );
 define( 'CZ_OUTLINE_PATH', plugin_dir_path( __FILE__ ) );
 define( 'CZ_OUTLINE_URL', plugin_dir_url( __FILE__ ) );
 
@@ -148,6 +148,12 @@ final class CZ_Outline_Plugin {
 	public function filter_content_add_heading_ids( $content ) {
 		if ( is_admin() || ! is_singular() || ! in_the_loop() || ! is_main_query() ) {
 			return $content;
+		}
+
+		// Permette ad altri plugin (es. cz-reading-time) di renderizzare porzioni arbitrarie
+		// del post senza che il contenuto venga sostituito con quello della pagina corrente.
+		if ( apply_filters( 'cz_outline_bypass_content_filter', false, $content ) ) {
+			return $this->remove_outline_shortcodes( $content );
 		}
 
 		$post = get_post();

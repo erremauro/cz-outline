@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] 2026-11-07
+### Added
+- Filtro `cz_outline_bypass_content_filter` (default `false`): se restituisce `true`, il filtro `the_content` lascia invariato il contenuto ricevuto (rimuovendo solo lo shortcode `[outline]`) invece di sostituirlo con la pagina corrente e iniettare l'indice.
+
+### Fixed
+- Il tempo totale di lettura di cz-reading-time nei post paginati non varia più a seconda della pagina visualizzata: prima ogni pagina renderizzata per il calcolo veniva sostituita con quella corrente.
+
 ## [1.3.0] 2026-11-07
 ### Added
 - Metodo pubblico `get_outline_export()`: restituisce l'outline come albero strutturato (`title`, `mode`, `depth`, `numbering`, `items[]` con `{ id, title, number?, children }`) più il contenuto grezzo con gli ID iniettati negli heading. Funziona anche fuori dal loop (es. REST API), usato da cz-article-api per l'export PDF.
@@ -60,7 +67,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cache transient con invalidazione automatica su `save_post`.
 - Caricamento automatico asset minificati `.min.css/.min.js` quando disponibili.
 
-[Unreleased]: https://github.com/erremauro/cz-outline/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/erremauro/cz-outline/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/erremauro/cz-outline/releases/tag/v1.3.1
+[1.3.0]: https://github.com/erremauro/cz-outline/releases/tag/v1.3.0
 [1.2.0]: https://github.com/erremauro/cz-outline/releases/tag/v1.2.0
 [1.1.0]: https://github.com/erremauro/cz-outline/releases/tag/v1.1.0
 [1.0.4]: https://github.com/erremauro/cz-outline/releases/tag/v1.0.4
